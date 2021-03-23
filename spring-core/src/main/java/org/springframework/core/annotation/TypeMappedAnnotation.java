@@ -110,9 +110,6 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 
 	private final int[] resolvedMirrors;
 
-	@Nullable
-	private String string;
-
 
 	private TypeMappedAnnotation(AnnotationTypeMapping mapping, @Nullable ClassLoader classLoader,
 			@Nullable Object source, @Nullable Object rootAttributes, ValueExtractor valueExtractor,
@@ -347,48 +344,6 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 	}
 
 	@Override
-	public String toString() {
-		String string = this.string;
-		if (string == null) {
-			StringBuilder builder = new StringBuilder();
-			builder.append("@");
-			builder.append(getType().getName());
-			builder.append("(");
-			for (int i = 0; i < this.mapping.getAttributes().size(); i++) {
-				Method attribute = this.mapping.getAttributes().get(i);
-				builder.append(i == 0 ? "" : ", ");
-				builder.append(attribute.getName());
-				builder.append("=");
-				builder.append(toString(getValue(i, Object.class)));
-			}
-			builder.append(")");
-			string = builder.toString();
-			this.string = string;
-		}
-		return string;
-	}
-
-	private Object toString(@Nullable Object value) {
-		if (value == null) {
-			return "";
-		}
-		if (value instanceof Class) {
-			return ((Class<?>) value).getName();
-		}
-		if (value.getClass().isArray()) {
-			StringBuilder builder = new StringBuilder();
-			builder.append("[");
-			for (int i = 0; i < Array.getLength(value); i++) {
-				builder.append(i == 0 ? "" : ", ");
-				builder.append(toString(Array.get(value, i)));
-			}
-			builder.append("]");
-			return builder.toString();
-		}
-		return String.valueOf(value);
-	}
-
-	@Override
 	@Nullable
 	protected <T> T getAttributeValue(String attributeName, Class<T> type) {
 		int attributeIndex = getAttributeIndex(attributeName, false);
@@ -596,8 +551,7 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 
 	private int getAttributeIndex(String attributeName, boolean required) {
 		Assert.hasText(attributeName, "Attribute name must not be null");
-		int attributeIndex = (isFiltered(attributeName) ? -1 :
-				this.mapping.getAttributes().indexOf(attributeName));
+		int attributeIndex = (isFiltered(attributeName) ? -1 : this.mapping.getAttributes().indexOf(attributeName));
 		if (attributeIndex == -1 && required) {
 			throw new NoSuchElementException("No attribute named '" + attributeName +
 					"' present in merged annotation " + getType().getName());
@@ -648,6 +602,7 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 	@Nullable
 	static <A extends Annotation> TypeMappedAnnotation<A> createIfPossible(
 			AnnotationTypeMapping mapping, MergedAnnotation<?> annotation, IntrospectionFailureLogger logger) {
+
 		if (annotation instanceof TypeMappedAnnotation) {
 			TypeMappedAnnotation<?> typeMappedAnnotation = (TypeMappedAnnotation<?>) annotation;
 			return createIfPossible(mapping, typeMappedAnnotation.source,
